@@ -252,8 +252,9 @@ select { width: 100%; padding: 12px; border: 2px solid var(--border); border-rad
     <div class="nav-info">STAMMDATEN</div>
 
     <div id="auftraggeber-banner" class="card" style="display:none; background:#eff6ff; border-color:var(--primary);">
-      <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">AUFTRAGGEBER</div>
-      <div id="auftraggeber-display" style="font-size:17px; font-weight:700; color:var(--primary);"></div>
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:2px;">AUFTRAGGEBER</div>
+      <div id="auftraggeber-display" style="font-size:16px; font-weight:700; color:var(--primary);"></div>
+      <div id="auftraggeber-addr-display" style="font-size:13px; color:var(--text-muted); margin-top:2px;"></div>
     </div>
 
     <div class="card">
@@ -311,6 +312,7 @@ select { width: 100%; padding: 12px; border: 2px solid var(--border); border-rad
     <input type="hidden" id="mfhEtagen" value="2">
     <input type="hidden" id="zimmerProEtage" value="3">
     <input type="hidden" id="hasKeller" value="false">
+    <input type="hidden" id="auftraggeberAdresse" value="">
 
     <div id="validationError" class="error-msg">Bitte alle Pflichtfelder (*) ausfüllen!</div>
     <button class="btn btn-primary" onclick="validateAndStart()">Aufnahme starten →</button>
@@ -347,19 +349,22 @@ select { width: 100%; padding: 12px; border: 2px solid var(--border); border-rad
         <span>⚡ Zählerschrank (ZV)</span><span id="mark_Z_SCHRANK" class="done-mark"></span>
       </div>
       <div id="body_Z_SCHRANK_ACC" class="room-body" style="display:none;">
-        <div class="elec-section-head">Zähler &amp; Hauptkomponenten</div>
-        <div class="field"><label>Anzahl Zählerplätze</label>
-          <select id="z_count" onchange="storage['z_count']=this.value; elecChanged()">
-            <option value="0">Kein Zählerschrank (nur UV)</option><option value="1">1 Zählerplatz</option>
-            <option value="2">2 Zählerplätze</option><option value="3">3 Zählerplätze</option><option value="4">4 Zählerplätze</option>
-          </select>
+        <div class="elec-section-head">Zähler</div>
+        <div class="field">
+          <label>Anzahl Zählerplätze (1–48)</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn-elec" onclick="elecChangeVal('z_count',-1)">−</button>
+            <input type="tel" id="z_count" value="0" class="elec-input" style="width:64px;" onclick="this.select()"
+              oninput="storage['z_count']=this.value; updateZvSls(); elecChanged()">
+            <button class="btn-elec" onclick="elecChangeVal('z_count',1)">+</button>
+            <span style="font-size:13px;color:var(--text-muted);">Plätze</span>
+          </div>
         </div>
-        <div class="field"><label>SLS-Schalter Ausführung</label>
-          <select id="zv_sls" onchange="storage['zv_sls']=this.value; elecChanged()">
-            <option value="Kein">Kein SLS vorhanden</option><option value="35A">3-polig 35 A</option>
-            <option value="40A">3-polig 40 A</option><option value="50A" selected>3-polig 50 A (Standard)</option><option value="63A">3-polig 63 A</option>
-          </select>
+        <div id="zv_sls_block" style="display:none;">
+          <div class="elec-section-head">SLS-Schalter (automatisch aus Zähleranzahl)</div>
+          <div id="zv_sls_rows_container" style=""></div>
         </div>
+        <div class="elec-section-head">Hauptkomponenten</div>
         <div class="elec-row"><div class="elec-label">Kombi-Ableiter (SPD Typ 1+2)</div><div class="elec-controls"><button class="btn-elec" onclick="elecChangeVal('zv_spd',-1)">−</button><input type="tel" id="zv_spd" value="0" class="elec-input" onclick="this.select()" oninput="storage['zv_spd']=this.value; elecChanged()"><button class="btn-elec" onclick="elecChangeVal('zv_spd',1)">+</button></div></div>
         <div class="elec-row"><div class="elec-label">Hauptschalter ZV</div><div class="elec-controls"><button class="btn-elec" onclick="elecChangeVal('zv_haupt',-1)">−</button><input type="tel" id="zv_haupt" value="0" class="elec-input" onclick="this.select()" oninput="storage['zv_haupt']=this.value; elecChanged()"><button class="btn-elec" onclick="elecChangeVal('zv_haupt',1)">+</button></div></div>
         <div class="elec-section-head">Sicherungsfeld ZV</div>
@@ -433,7 +438,10 @@ select { width: 100%; padding: 12px; border: 2px solid var(--border); border-rad
       <button class="btn btn-primary" style="background:#f59e0b;" onclick="downloadAllPhotos()">📸 Fotos runterladen</button>
       <button class="btn btn-primary" style="background:#6366f1;" onclick="exportBackup()">📂 Backup (TXT)</button>
     </div>
-    <button class="btn btn-success" onclick="sendEmail()">📧 E-Mail senden</button>
+    <button class="btn btn-success" onclick="sendEmail()">📧 E-Mail + PDF senden</button>
+    <div id="emailHintBox" style="font-size:13px;color:var(--text-muted);text-align:center;margin:-4px 0 10px;padding:6px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
+      Empfänger: <span id="emailHintAddr" style="font-weight:700;color:var(--primary);">— im Setup eintragen —</span>
+    </div>
     <button class="btn btn-opt" onclick="triggerCsvUpload(true)">📂 CSV laden / aktualisieren</button>
     <button class="btn btn-danger" onclick="confirmReset()">🔄 App zurücksetzen (Alles löschen)</button>
   </div>
@@ -617,6 +625,7 @@ function buildTHFields(etKey, etLabel) {
     {k:'th_'+etKey+'_notlZB',   l:'Notlicht Zentralbatterie ('+etLabel+')', group:'Beleuchtung'},
     {k:'th_'+etKey+'_rzl',      l:'RZL – Rettungszeichenleuchte ('+etLabel+')', group:'Beleuchtung'},
     {k:'th_'+etKey+'_rwm',      l:'RWM – Rauchwarnmelder ('+etLabel+')', group:'Beleuchtung'},
+    {k:'th_'+etKey+'_hdm',      l:'Handdruckmelder ('+etLabel+')', group:'Brandschutz'},
   ];
 }
 function buildTHFieldsKeller(etKey, etLabel) {
@@ -632,6 +641,7 @@ function buildTHFieldsKeller(etKey, etLabel) {
     {k:'th_'+etKey+'_notlZB',   l:'Notlicht Zentralbatterie ('+etLabel+')', group:'Beleuchtung'},
     {k:'th_'+etKey+'_rzl',      l:'RZL – Rettungszeichenleuchte ('+etLabel+')', group:'Beleuchtung'},
     {k:'th_'+etKey+'_rwm',      l:'RWM – Rauchwarnmelder ('+etLabel+')', group:'Beleuchtung'},
+    {k:'th_'+etKey+'_hdm',      l:'Handdruckmelder ('+etLabel+')', group:'Brandschutz'},
   ];
 }
 
@@ -649,9 +659,6 @@ function buildTHFieldsAussen() {
   return [
     {k:'au_leuchte',    l:'Außenleuchten',              group:'Beleuchtung'},
     {k:'au_notlEB',     l:'Notlicht Einzelbatterie',    group:'Beleuchtung'},
-    {k:'au_rwm',        l:'RWM – Rauchwarnmelder',      group:'Beleuchtung'},
-    {k:'au_sch',        l:'Schalter',                   group:'Schalter & Steckdosen'},
-    {k:'au_sd',         l:'Steckdose',                  group:'Schalter & Steckdosen'},
     {k:'au_asd',        l:'Außen-Steckdose (IP44)',      group:'Schalter & Steckdosen'},
     {k:'au_r1',         l:'Rahmen 1-fach',              group:'Rahmen'},
     {k:'au_r2',         l:'Rahmen 2-fach',              group:'Rahmen'},
@@ -734,20 +741,38 @@ function loadCsv(input) {
 
 function parseCsv(text) {
   csvData = [];
-  var lines = text.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 0; });
+  // \r\n und \n beide unterstützen
+  var lines = text.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 0; });
   if(lines.length < 2) return;
-  // Ersten Header-Zeile erkennen
+
   var header = lines[0].toLowerCase();
   var hasHeader = header.indexOf('auftraggeber') >= 0 || header.indexOf('adresse') >= 0;
   var startIdx = hasHeader ? 1 : 0;
   var isVariantB = lines[0].split(';').length >= 3;
+
   for(var i=startIdx; i<lines.length; i++) {
+    // Split nur am Semikolon — Kommas innerhalb der Felder bleiben intakt
     var cols = lines[i].split(';');
     if(cols.length < 2) continue;
+
+    var agRaw = (cols[0]||'').trim();
+    var adresse = (cols[1]||'').trim();
+
+    // Auftraggeber: Name ist alles vor dem ersten Komma
+    // "Rhein-Neckar Wohnbau GmbH, Hubertusweg 11, 68229 Mannheim" → Name="Rhein-Neckar Wohnbau GmbH"
+    var agName = agRaw;
+    var agAddr = '';
+    var commaIdx = agRaw.indexOf(',');
+    if(commaIdx > 0) {
+      agName = agRaw.substring(0, commaIdx).trim();
+      agAddr = agRaw.substring(commaIdx + 1).trim();
+    }
+
     var entry = {
-      auftraggeber: (cols[0]||'').trim(),
-      adresse: (cols[1]||'').trim(),
-      etagen: isVariantB && cols[2] ? parseInt(cols[2].trim())||2 : 2,
+      auftraggeber: agName,
+      auftraggeberAdresse: agAddr,
+      adresse: adresse,
+      etagen: isVariantB && cols[2] ? parseInt(cols[2].trim())||0 : 0,
       wohnungen: []
     };
     if(isVariantB && cols[3]) {
@@ -806,9 +831,16 @@ function selectAdresseByIdx(idx) {
 function selectAdresse(adresse, ag, csvEntry) {
   document.getElementById('adresseInput').value = adresse;
   document.getElementById('auftraggeber').value = ag || '';
+  // Banner: Name + Adresse des Auftraggebers getrennt zeigen
+  var agAddr = (csvEntry && csvEntry.auftraggeberAdresse) ? csvEntry.auftraggeberAdresse : '';
   document.getElementById('auftraggeber-display').textContent = ag || '';
+  document.getElementById('auftraggeber-addr-display').textContent = agAddr;
   document.getElementById('auftraggeber-banner').style.display = ag ? 'block' : 'none';
-  // Adresse in Straße + Stadt aufsplitten
+  // AG-Adresse persistent speichern für PDF
+  var agAddrEl = document.getElementById('auftraggeberAdresse');
+  if(agAddrEl) agAddrEl.value = agAddr;
+
+  // Objekt-Adresse in Straße + Stadt aufsplitten
   var parts = adresse.split(',');
   if(parts.length >= 2) {
     document.getElementById('strasse').value = parts[0].trim();
@@ -816,12 +848,19 @@ function selectAdresse(adresse, ag, csvEntry) {
   } else {
     document.getElementById('strasse').value = adresse;
   }
-  // Wohnungen aus CSV befüllen
+
+  // Etagen aus CSV übernehmen falls vorhanden (nur Format B)
   var entry = csvEntry || csvData.find(function(d){ return d.adresse === adresse; });
-  if(entry && entry.wohnungen && entry.wohnungen.length > 0) {
-    wohnungenListe = entry.wohnungen.map(function(name, i){
-      return {id:'W_CSV_'+i, name:name, selected:false, done:false};
-    });
+  if(entry) {
+    if(entry.etagen > 0) {
+      document.getElementById('ogAnzahl').value = entry.etagen;
+    }
+    // Ohne Etagen in CSV: ogAnzahl bleibt wie vom Nutzer gewählt
+    if(entry.wohnungen && entry.wohnungen.length > 0) {
+      wohnungenListe = entry.wohnungen.map(function(name, i){
+        return {id:'W_CSV_'+i, name:name, selected:false, done:false};
+      });
+    }
   }
   closeAutocomplete();
 }
@@ -1216,10 +1255,10 @@ var gemEinheiten = []; // [{key, label, isAufzug/isKlingel/isAussen}]
 
 function buildGemeinschaftUI() {
   gemEinheiten = [
-    {key:'aufzug',  label:'Aufzug',        isAufzug:true},
-    {key:'klingel', label:'Klingelanlage',  isKlingel:true},
-    {key:'aussen',  label:'Außenbereich',   isAussen:true,
-      fields: buildTHFieldsAussen()},
+    {key:'aufzug',      label:'Aufzug',        isAufzug:true},
+    {key:'tiefgarage',  label:'Tiefgarage',    isTiefgarage:true},
+    {key:'klingel',     label:'Klingelanlage', isKlingel:true},
+    {key:'aussen',      label:'Außenbereich',  isAussen:true, fields: buildTHFieldsAussen()},
   ];
   renderGemeinschaftUI();
 }
@@ -1237,7 +1276,8 @@ function renderGemeinschaftUI() {
       container.appendChild(btn);
       return;
     }
-    if(g.isAufzug)  { container.innerHTML += renderAufzugAccordion(); }
+    if(g.isAufzug)       { container.innerHTML += renderAufzugAccordion(); }
+    else if(g.isTiefgarage) { container.innerHTML += renderTiefgarageAccordion(); }
     else if(g.isKlingel) { container.innerHTML += renderKlingelAccordion(); }
     else if(g.isAussen)  { container.innerHTML += renderAussenAccordion(g); }
   });
@@ -1270,8 +1310,77 @@ function renderAussenAccordion(g) {
     '</div></div>';
 }
 
+function renderTiefgarageAccordion() {
+  var done = isGemEinheitDone('tiefgarage');
+  var okActive = storage['th_ok_tiefgarage'] ? 'active' : '';
+  var apup = function(key, label) {
+    var ap = parseInt(storage['tg_'+key+'_ap'])||0;
+    var up = parseInt(storage['tg_'+key+'_up'])||0;
+    return '<div class="material-item" style="width:100%"><label>'+label+
+      ' <span style="font-size:11px;color:var(--text-muted);">AP / UP</span></label>'+
+      '<div style="display:flex;gap:8px;margin-top:4px;">'+
+      '<div style="flex:1;text-align:center"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Aufputz</div>'+
+      '<input type="tel" id="tg_'+key+'_ap" value="'+ap+'" onclick="this.select()" oninput="storage[\'tg_'+key+'_ap\']=this.value;updateGemeinschaftProgress();updateGlobalProgress()" style="text-align:center;font-weight:bold;padding:6px;border:1px solid #cbd5e1;border-radius:6px;width:100%"></div>'+
+      '<div style="flex:1;text-align:center"><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Unterputz</div>'+
+      '<input type="tel" id="tg_'+key+'_up" value="'+up+'" onclick="this.select()" oninput="storage[\'tg_'+key+'_up\']=this.value;updateGemeinschaftProgress();updateGlobalProgress()" style="text-align:center;font-weight:bold;padding:6px;border:1px solid #cbd5e1;border-radius:6px;width:100%"></div>'+
+      '</div></div>';
+  };
+  var num = function(key, label) {
+    return '<div class="material-item"><label>'+label+'</label>'+
+      '<input type="tel" id="tg_'+key+'" value="'+(storage['tg_'+key]||0)+'" onclick="this.select()" '+
+      'oninput="storage[\'tg_'+key+'\']=this.value;updateGemeinschaftProgress();updateGlobalProgress()"></div>';
+  };
+  var note = function(key, label) {
+    return '<div class="field" style="margin-top:6px;"><label style="font-size:13px;font-weight:700;color:var(--text-muted);">'+label+' – Bemerkung</label>'+
+      '<input type="text" id="tg_'+key+'_note" value="'+(storage['tg_'+key+'_note']||'')+'" placeholder="Hersteller, Typ, Zustand..." '+
+      'oninput="storage[\'tg_'+key+'_note\']=this.value" autocorrect="off"></div>';
+  };
+
+  return '<div class="room-accordion">'+
+    '<div class="room-header-bar" onclick="toggleTHAccordion(\'gem_body_tiefgarage\')">'+
+    '<span>🅿️ Tiefgarage</span><span class="done-mark" id="gem_done_tiefgarage">'+(done?'✅':'')+'</span></div>'+
+    '<div id="gem_body_tiefgarage" class="room-body">'+
+    '<button class="btn btn-ok '+okActive+'" id="th_ok_btn_tiefgarage" onclick="toggleTHOk(\'tiefgarage\')">'+
+    (storage['th_ok_tiefgarage']?'ALLES OK ✓':'Nichts zu tun / OK')+'</button>'+
+
+    '<div class="elec-section-head">Beleuchtung & Sicherheit</div>'+
+    '<div class="material-grid">'+
+    num('leuchte','Leuchten / Leuchtmittel')+
+    num('bwm','Bewegungsmelder')+
+    num('notl','Notlicht')+
+    num('rzl','RZL – Rettungszeichenleuchte')+
+    num('rwm','RWM – Rauchwarnmelder')+
+    num('co2','CO² – Melder')+
+    '</div>'+
+
+    '<div class="elec-section-head">Schalter & Steckdosen (AP / UP)</div>'+
+    '<div class="material-grid">'+
+    apup('sch','Schalter')+
+    apup('tas','Taster')+
+    apup('sd','Steckdose')+
+    '</div>'+
+
+    '<div class="elec-section-head">Antriebe & Zufahrt</div>'+
+    '<div class="material-grid">'+
+    num('rolltor','Elektrisches Rolltor')+
+    num('schranke','Schranke')+
+    '</div>'+
+    note('rolltor','Rolltor')+
+    note('schranke','Schranke')+
+
+    '<button class="btn btn-photo" style="margin-top:10px;" onclick="addPhoto(\'GEM_tiefgarage\')">'+
+    '📸 Foto Tiefgarage ('+(roomPhotos['GEM_tiefgarage']||[]).length+')</button>'+
+    '</div></div>';
+}
+
 function isGemEinheitDone(key) {
   if(storage['th_ok_'+key]) return true;
+  if(key==='tiefgarage') {
+    return ['tg_leuchte','tg_bwm','tg_notl','tg_rzl','tg_rwm','tg_co2',
+            'tg_sch_ap','tg_sch_up','tg_tas_ap','tg_tas_up','tg_sd_ap','tg_sd_up',
+            'tg_rolltor','tg_schranke'].some(function(k){ return parseInt(storage[k])>0; }) ||
+           (roomPhotos['GEM_tiefgarage']||[]).length>0;
+  }
   if(key==='aufzug') return (storage['aufzug_hersteller']||'').length>0||parseInt(storage['aufzug_licht'])>0||parseInt(storage['aufzug_halt'])>0||(roomPhotos['TH_aufzug']||[]).length>0;
   if(key==='klingel') return (storage['kl_typ']||'').length>0||(storage['kl_ausfuehrung']||'').length>0||
     ['kl_sprechstellen','kl_klingeltaster','kl_tueroeffner','kl_video','kl_sprechanlage','kl_netzteil','kl_klingeltransf','kl_aufputz','kl_unterputz','kl_schild'].some(function(k){ return parseInt(storage[k])>0; })||
@@ -1572,16 +1681,49 @@ function goToStep(id) {
 }
 
 function restoreElecFields() {
-  var ids = ['z_count','zv_sls','zv_rows','uv_rows'];
+  var ids = ['zv_rows','uv_rows'];
   ids.forEach(function(id){ var el=document.getElementById(id); if(el&&storage[id]!==undefined) el.value=storage[id]; });
   var numIds = ['zv_spd','zv_haupt','zv_fi4','zv_fi2','zv_rcbo','zv_b16_1p','zv_b16_3p','zv_c_typ','zv_eltako','uv_haupt','uv_spd','uv_fi4','uv_fi2','uv_rcbo','uv_b16_1p','uv_b16_3p','uv_b32_3p','uv_c_typ','uv_eltako','uv_treppen','uv_trafo','uv_uhr'];
   numIds.forEach(function(id){ var el=document.getElementById(id); if(el&&storage[id]!==undefined) el.value=storage[id]; });
+  // z_count separat + SLS-Zeilen aufbauen
+  var zEl = document.getElementById('z_count');
+  if(zEl && storage['z_count']!==undefined) { zEl.value=storage['z_count']; updateZvSls(); }
+}
+
+function updateZvSls() {
+  var count = Math.max(0, Math.min(48, parseInt(document.getElementById('z_count').value)||0));
+  document.getElementById('z_count').value = count;
+  storage['z_count'] = count;
+  var block = document.getElementById('zv_sls_block');
+  var container = document.getElementById('zv_sls_rows_container');
+  if(!block || !container) return;
+  if(count === 0) { block.style.display='none'; return; }
+  block.style.display = 'block';
+  var slsOptions = '<option value="Kein">Kein SLS</option><option value="35A">35 A</option><option value="40A">40 A</option><option value="50A" selected>50 A</option><option value="63A">63 A</option>';
+  var html = '';
+  // Speichere SLS-Werte pro Zähler
+  for(var i=1; i<=count; i++) {
+    var key = 'zv_sls_'+i;
+    var val = storage[key] || '50A';
+    html += '<div class="elec-row"><div class="elec-label">SLS Zähler '+i+'</div>'+
+      '<div class="elec-controls"><select id="'+key+'" onchange="storage[\''+key+'\']=this.value;elecChanged()" style="width:110px;padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;">'+
+      '<option value="Kein"'+(val==='Kein'?' selected':'')+'>Kein SLS</option>'+
+      '<option value="35A"'+(val==='35A'?' selected':'')+'>35 A</option>'+
+      '<option value="40A"'+(val==='40A'?' selected':'')+'>40 A</option>'+
+      '<option value="50A"'+(val==='50A'?' selected':'')+'>50 A</option>'+
+      '<option value="63A"'+(val==='63A'?' selected':'')+'>63 A</option>'+
+      '</select></div></div>';
+  }
+  container.innerHTML = html;
+  elecChanged();
 }
 
 function elecChangeVal(id, amount) {
   var el = document.getElementById(id);
   var newVal = Math.max(0,(parseInt(el.value)||0)+amount);
-  el.value = newVal; storage[id] = newVal; elecChanged();
+  el.value = newVal; storage[id] = newVal;
+  if(id === 'z_count') updateZvSls();
+  elecChanged();
 }
 function elecChanged() { updateGlobalProgress(); }
 function tabClick(stepId) {
@@ -1599,11 +1741,17 @@ function tabClick(stepId) {
 function finalize() {
   var totals = {}, resRooms = '';
 
-  // ZV
-  var zvSls = storage['zv_sls'] || document.getElementById('zv_sls').value || '';
+  // ZV – neue Logik: Anzahl Zähler + je ein SLS-Wert
+  var zCount = parseInt(storage['z_count'])||0;
   var zvParts = [];
-  if(zvSls && zvSls!=='Kein') zvParts.push('SLS '+zvSls);
-  [['z_count','Zählerplätze'],['zv_spd','Kombi-Ableiter SPD'],['zv_haupt','Hauptschalter ZV']].forEach(function(p){ if(parseInt(storage[p[0]])>0) zvParts.push(p[1]+': '+storage[p[0]]); });
+  if(zCount>0) {
+    zvParts.push(zCount+' Zählerplätze');
+    for(var zi=1;zi<=zCount;zi++){
+      var slsVal = storage['zv_sls_'+zi]||'50A';
+      if(slsVal!=='Kein') zvParts.push('SLS '+zi+': '+slsVal);
+    }
+  }
+  [['zv_spd','SPD'],['zv_haupt','Hauptschalter ZV']].forEach(function(p){ if(parseInt(storage[p[0]])>0) zvParts.push(p[1]+': '+storage[p[0]]); });
   resRooms += '<div class="summary-box"><b>⚡ Zählerschrank (ZV):</b> '+(zvParts.join(', ')||'–')+' <i>('+(roomPhotos['Z_SCHRANK']||[]).length+' F)</i></div>';
 
   var zvSfParts = [];
@@ -1696,6 +1844,10 @@ function finalize() {
 
   document.getElementById('totalMaterialContent').innerHTML = totalText||'Kein Material erfasst';
   document.getElementById('finalDetails').innerHTML = resRooms;
+  // E-Mail-Hinweis aktualisieren
+  loadFirmaCfg();
+  var hintEl = document.getElementById('emailHintAddr');
+  if(hintEl) hintEl.textContent = firmaCfg.emailTo || '— im Setup eintragen —';
   goToStep('stepFinal');
 }
 
@@ -1927,16 +2079,23 @@ function exportPDF() {
     y += 2;
   }
 
-  // ── Empfänger-Adresse ──
+  // ── Empfänger-Adresse (Auftraggeber mit eigener Adresse) ──
   var ag = document.getElementById('auftraggeber').value;
+  var agAdresse = (document.getElementById('auftraggeberAdresse').value || '').trim();
   var strObjekt = document.getElementById('strasse').value;
   var stadtObjekt = document.getElementById('stadt').value;
   setFont(11, 'bold', [20,20,20]);
   if(ag) { writeText(ag, mL, y); y += 6; }
-  // Bei MFH: Auftraggeber-Adresse = Objekt-Adresse (keine separate Auftraggeber-Adresse bekannt)
   setFont(11, 'normal', [20,20,20]);
-  if(strObjekt) { writeText(strObjekt, mL, y); y += 5.5; }
-  if(stadtObjekt) { writeText(stadtObjekt, mL, y); y += 5.5; }
+  // AG-eigene Adresse (aus CSV) bevorzugen, sonst Objekt-Adresse als Fallback
+  if(agAdresse) {
+    // agAdresse ist "Straße Nr, PLZ Ort" — ggf. aufsplitten
+    var agParts = agAdresse.split(',');
+    agParts.forEach(function(p){ if(p.trim()) { writeText(p.trim(), mL, y); y += 5.5; } });
+  } else {
+    if(strObjekt) { writeText(strObjekt, mL, y); y += 5.5; }
+    if(stadtObjekt) { writeText(stadtObjekt, mL, y); y += 5.5; }
+  }
   y += 3;
 
   // ── Datum + Ort rechtsbündig ──
@@ -2078,7 +2237,12 @@ function collectAllMaterial() {
   });
 
   // Elektrische Anlage — ZV
-  addPos('SLS-Schalter ZV', (function(){ var v=document.getElementById('zv_sls').value; return (v&&v!=='Kein')?1:0; })());
+  // SLS: eine Position pro Zähler mit dessen SLS-Typ
+  var _zc = parseInt(storage['z_count'])||0;
+  for(var _zi=1;_zi<=_zc;_zi++){
+    var _sv = storage['zv_sls_'+_zi]||'50A';
+    if(_sv!=='Kein') addPos('SLS-Schalter '+_sv+' (Zähler '+_zi+')', 1);
+  }
   [['zv_spd','SPD Kombi-Ableiter'],['zv_haupt','Hauptschalter ZV'],['zv_fi4','FI 4-pol (ZV)'],['zv_fi2','FI 2-pol (ZV)'],['zv_rcbo','FI/LS RCBO (ZV)'],['zv_b16_1p','LS B16 1-pol (ZV)'],['zv_b16_3p','LS B16 3-pol (ZV)'],['zv_c_typ','LS C-Typ (ZV)'],['zv_eltako','Stromstoßschalter (ZV)']].forEach(function(p){ addPos(p[1], storage[p[0]]); });
 
   // UV
@@ -2159,52 +2323,108 @@ function exportBackup() {
 }
 
 function sendEmail() {
-  // Zuerst PDF erzeugen + speichern, dann Mail öffnen
-  var auftrag = document.getElementById('auftragsNummer').value;
-  var strasse = document.getElementById('strasse').value;
-  var stadt   = document.getElementById('stadt').value;
-  var datum   = getDateString();
-  var monteur = document.getElementById('monteurName').value;
-  var ag      = document.getElementById('auftraggeber').value;
-
-  // PDF generieren (speichert automatisch)
   exportPDF();
-
   setTimeout(function() {
     loadFirmaCfg();
-    var to = firmaCfg.emailTo || '';
-    var cc = firmaCfg.emailCc || '';
+    var auftrag = document.getElementById('auftragsNummer').value;
+    var strasse  = document.getElementById('strasse').value;
+    var stadt    = document.getElementById('stadt').value;
+    var datum    = getDateString();
+    var monteur  = document.getElementById('monteurName').value;
+    var ag       = document.getElementById('auftraggeber').value;
+    var fname    = 'Brief_'+strasse.replace(/[^a-zA-Z0-9]/g,'_')+'_'+datum.replace(/\./g,'-')+'.pdf';
+    var S = '\n────────────────────────────────\n';
 
-    var subject = 'Bestandsaufnahme – ' + strasse + (ag ? ' (' + ag + ')' : '');
+    var body = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    body += 'BESTANDSAUFNAHME – STAMMDATEN\n';
+    body += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    body += 'Datum:        ' + datum + '\n';
+    body += 'Auftrag:      ' + (auftrag||'–') + '\n';
+    body += 'Monteur:      ' + (monteur||'–') + '\n';
+    body += 'Objekt:       ' + strasse + ', ' + stadt + '\n';
+    if(ag) body += 'Auftraggeber: ' + ag + '\n';
 
-    // Kurzer Body — lange Bodies blockieren viele Mail-Apps
-    var fname = 'Brief_' + strasse.replace(/[^a-zA-Z0-9]/g,'_') + '_' + datum.replace(/\./g,'-') + '.pdf';
-    var body = 'Guten Tag,\n\n'
-      + 'anbei der Bericht zur Bestandsaufnahme vom ' + datum + '.\n\n'
-      + 'Objekt:  ' + strasse + ', ' + stadt + '\n'
-      + (ag      ? 'AG:      ' + ag + '\n'      : '')
-      + 'Auftrag: ' + (auftrag||'–') + '\n'
-      + 'Monteur: ' + (monteur||'–') + '\n\n'
-      + '>>> Bitte PDF anhängen: ' + fname + ' <<<\n\n'
-      + (firmaCfg.firmaName||'') + '\n'
-      + (firmaCfg.firmaStr ? firmaCfg.firmaStr+'\n' : '')
-      + (firmaCfg.firmaOrt ? firmaCfg.firmaOrt+'\n' : '')
-      + (firmaCfg.firmaTel ? 'Tel: '+firmaCfg.firmaTel+'\n' : '');
+    // Treppenhaus
+    var thLines = [];
+    thEtagen.forEach(function(et){
+      if(et.optional && !storage['th_active_'+et.key]) return;
+      if(!isTHEtageDone(et.key)) return;
+      var parts = [];
+      if(storage['th_ok_'+et.key]) { parts.push('OK'); }
+      else { (et.fields||[]).forEach(function(f){ var v=parseInt(storage[f.k])||0; if(v>0) parts.push(f.l.split('(')[0].trim()+' '+v+'×'); }); }
+      thLines.push('  ' + et.label + ': ' + (parts.join(', ')||'–'));
+    });
+    if(thLines.length) body += S + 'TREPPENHAUS\n' + S + thLines.join('\n') + '\n';
 
-    var ccPart = cc ? 'cc='+encodeURIComponent(cc)+'&' : '';
-    var mailto = 'mailto:'+encodeURIComponent(to)+'?'+ccPart
-      +'subject='+encodeURIComponent(subject)
-      +'&body='+encodeURIComponent(body);
+    // Gemeinschaft
+    var gemLines = [];
+    gemEinheiten.forEach(function(g){
+      if(!storage['gem_active_'+g.key] || !isGemEinheitDone(g.key)) return;
+      var parts = [];
+      if(storage['th_ok_'+g.key]) { parts.push('OK'); }
+      else if(g.isTiefgarage) {
+        [['tg_leuchte','Leuchten'],['tg_bwm','BWM'],['tg_notl','Notlicht'],['tg_rzl','RZL'],
+         ['tg_rwm','RWM'],['tg_co2','CO²'],['tg_sch_ap','Sch.AP'],['tg_sch_up','Sch.UP'],
+         ['tg_tas_ap','Tast.AP'],['tg_tas_up','Tast.UP'],['tg_sd_ap','SD AP'],['tg_sd_up','SD UP'],
+         ['tg_rolltor','Rolltor'],['tg_schranke','Schranke']].forEach(function(p){
+           var v=parseInt(storage[p[0]])||0; if(v>0) parts.push(p[1]+' '+v+'×');
+         });
+      } else if(g.isKlingel) {
+        [['kl_sprechstellen','Sprechst.'],['kl_klingeltaster','Klingeltaster'],['kl_tueroeffner','Türöffner'],
+         ['kl_video','Kameras'],['kl_schild','Klingelschild']].forEach(function(p){
+           var v=parseInt(storage[p[0]])||0; if(v>0) parts.push(p[1]+' '+v+'×');
+         });
+      } else if(g.isAufzug) {
+        if(storage['aufzug_hersteller']) parts.push(storage['aufzug_hersteller']);
+        if(parseInt(storage['aufzug_halt'])>0) parts.push(storage['aufzug_halt']+' Haltestellen');
+      } else if(g.isAussen) {
+        (g.fields||[]).forEach(function(f){ var v=parseInt(storage[f.k])||0; if(v>0) parts.push(f.l.split('(')[0].trim()+' '+v+'×'); });
+      }
+      gemLines.push('  ' + g.label + ': ' + (parts.join(', ')||'(erfasst)'));
+    });
+    if(gemLines.length) body += S + 'GEMEINSCHAFTSBEREICHE\n' + S + gemLines.join('\n') + '\n';
 
-    // Robustere Methode als window.location.href
+    // Gesamtmaterial
+    body += S + 'GESAMTMATERIAL\n' + S;
+    body += document.getElementById('totalMaterialContent').innerText.replace(/[^\S\n]+/g,' ').trim() + '\n';
+
+    // Elektro
+    var zCount = parseInt(storage['z_count'])||0;
+    if(zCount>0) {
+      body += S + 'ELEKTRISCHE ANLAGE\n' + S;
+      body += 'Zählerschrank: ' + zCount + ' Zählerplätze\n';
+      for(var i=1;i<=zCount;i++){
+        var sls=storage['zv_sls_'+i]||'50A';
+        body += '  Zähler '+i+': SLS '+(sls==='Kein'?'kein SLS':sls)+'\n';
+      }
+      var uvParts=[];
+      [['uv_haupt','HS'],['uv_fi4','FI 4p'],['uv_fi2','FI 2p'],['uv_rcbo','RCBO'],
+       ['uv_b16_1p','B16 1p'],['uv_b16_3p','B16 3p'],['uv_b32_3p','B32 3p'],
+       ['uv_eltako','Eltako'],['uv_treppen','Treppenlicht'],['uv_trafo','Trafo']].forEach(function(p){
+         var v=parseInt(storage[p[0]])||0; if(v>0) uvParts.push(p[1]+' '+v+'×');
+       });
+      if(uvParts.length) body += 'UV: ' + uvParts.join(', ') + '\n';
+    }
+
+    // Notizen
+    var notes = document.getElementById('finalNotes').value;
+    if(notes) body += S + 'NOTIZEN\n' + S + notes + '\n';
+
+    body += '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    body += '>>> PDF anhängen: ' + fname + ' <<<\n';
+    if(firmaCfg.firmaName) body += '\n' + firmaCfg.firmaName + (firmaCfg.firmaTel ? ' | Tel: '+firmaCfg.firmaTel : '');
+
+    var to = firmaCfg.emailTo||'', cc = firmaCfg.emailCc||'';
+    var sub = 'Bestandsaufnahme – '+strasse+(ag?' ('+ag+')':'');
+    var ccP = cc ? 'cc='+encodeURIComponent(cc)+'&' : '';
     var a = document.createElement('a');
-    a.href = mailto;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function(){ document.body.removeChild(a); }, 1000);
+    a.href = 'mailto:'+encodeURIComponent(to)+'?'+ccP+'subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(body);
+    a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); },1000);
   }, 900);
 }
+
 
 // ═══════════════════════════════════════════════════════════
 // PIN-SYSTEM
