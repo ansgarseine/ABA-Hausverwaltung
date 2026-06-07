@@ -3,7 +3,7 @@
   "short_name": "ABA V2",
   "description": "Bestandsaufnahme für Elektroanlagen – PWA",
   "start_url": "/ABA-Hausverwaltung/index.html",
-  "scope": "/ABA-Hausverwaltung/"
+  "scope": "/ABA-Hausverwaltung/",
   "display": "standalone",
   "background_color": "#f0f4ff",
   "theme_color": "#1a56db",
