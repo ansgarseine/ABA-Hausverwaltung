@@ -1,52 +1,55 @@
-const CACHE_NAME = 'aba-v2-cache-v1';
+// sw.js – Service Worker für ABA Hausverwaltung
+// Version: v1.0 – optimiert für GitHub Pages
+
+const CACHE_NAME = 'aba-hv-cache-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-self.addEventListener('install', function(event) {
+// 🔹 Installation – legt Cache an
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(ASSETS).catch(function(err) {
-        console.warn('Cache addAll partial failure:', err);
-      });
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(ASSETS))
+      .catch(err => console.error('Cache-Fehler:', err))
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', function(event) {
+// 🔹 Aktivierung – löscht alte Caches
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(function(keys) {
-      return Promise.all(
-        keys.filter(function(key) { return key !== CACHE_NAME; })
-            .map(function(key) { return caches.delete(key); })
-      );
-    })
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
+      )
+    )
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', function(event) {
+// 🔹 Fetch – Offline-Fallback & dynamisches Caching
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(function(cached) {
-      if (cached) return cached;
-      return fetch(event.request).then(function(response) {
-        if (!response || response.status !== 200 || response.type === 'opaque') {
-          return response;
-        }
-        var clone = response.clone();
-        caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(event.request, clone);
-        });
-        return response;
-      }).catch(function() {
-        return caches.match('/index.html');
-      });
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request)
+        .then(networkResponse => {
+          if (!networkResponse || networkResponse.status !== 200) {
+            return networkResponse;
+          }
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return networkResponse;
+        })
+        .catch(() => caches.match('./index.html'));
     })
   );
 });
